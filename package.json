@@ -1,0 +1,20 @@
+{
+  "name": "cursor-throwaway",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @cursor-burner/shared && npm run build -w @cursor-burner/api",
+    "dev": "npm run dev -w @cursor-burner/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

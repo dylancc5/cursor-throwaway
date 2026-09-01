@@ -1,0 +1,26 @@
+{
+  "name": "@cursor-burner/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test dist/**/*.test.js",
+    "spike:dashboard": "tsx src/usage/spike-dashboard.ts"
+  },
+  "dependencies": {
+    "@cursor-burner/shared": "*",
+    "@cursor/sdk": "^1.0.0",
+    "@hono/node-server": "^1.14.1",
+    "hono": "^4.7.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
