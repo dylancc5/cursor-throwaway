@@ -1,17 +1,23 @@
 {
   "name": "cursor-throwaway",
-  "version": "0.1.0",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "npm run dev --workspace=web",
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "build": "npm run build -w @cursor-burner/shared && npm run build -w @cursor-burner/api",
+    "build:web": "npm run build -w @cursor-burner/shared && npm run build -w @cursor-burner/web",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run dev -w @cursor-burner/api",
+    "dev:web": "npm run dev -w @cursor-burner/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
-    "typescript": "^5.7.3"
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { AccountUsage } from '@cursor-throwaway/shared';
+import type { AccountUsage } from '@cursor-burner/shared';
 import { formatPercentage } from '@/lib/utils';
 import { CreditCard, Info, Sparkles } from 'lucide-react';
 

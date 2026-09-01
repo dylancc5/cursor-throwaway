@@ -6,7 +6,7 @@ import type {
   BurnConfig,
   BurnEvent,
   BurnSnapshot,
-} from '@cursor-throwaway/shared';
+} from '@cursor-burner/shared';
 import { apiClient } from '@/lib/api-client';
 import { MockBurnEngine } from '@/lib/mock-engine';
 
@@ -22,6 +22,13 @@ export interface BurnEventWithId {
   event: BurnEvent;
 }
 
+function eventTimestamp(event: BurnEvent): string {
+  if ('at' in event && typeof event.at === 'string') {
+    return event.at;
+  }
+  return new Date().toISOString();
+}
+
 export function useBurnEvents(options: UseBurnEventsOptions = {}) {
   const { sessionId, isMock = false } = options;
 
@@ -29,7 +36,9 @@ export function useBurnEvents(options: UseBurnEventsOptions = {}) {
   const [events, setEvents] = useState<BurnEventWithId[]>([]);
   const [snapshot, setSnapshot] = useState<BurnSnapshot | null>(null);
   const [agents, setAgents] = useState<Map<number, AgentWorkerState>>(new Map());
-  const [burnRateHistory, setBurnRateHistory] = useState<Array<{ time: string; rate: number; tokens: number }>>([]);
+  const [burnRateHistory, setBurnRateHistory] = useState<
+    Array<{ time: string; rate: number; tokens: number }>
+  >([]);
   const [error, setError] = useState<string | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -45,30 +54,29 @@ export function useBurnEvents(options: UseBurnEventsOptions = {}) {
 
     setEvents((prev) => [eventWithId, ...prev.slice(0, 199)]);
 
-    // Update state based on specific event types
     if (event.type === 'usage.snapshot') {
-      const nowFormatted = new Date().toLocaleTimeString('en-US', { hour12: false });
+      const at = event.at;
       setSnapshot({
-        sessionId: event.sessionId || 'current',
-        status: 'running',
+        sessionId: event.sessionId || sessionId || 'current',
+        status: 'burning',
         session: event.session,
         account: event.account,
         cap: event.cap,
         activeAgents: event.activeAgents,
         targetConcurrency: 20,
-        at: event.at,
+        at,
       });
 
       setBurnRateHistory((prev) => {
         const next = [
           ...prev,
           {
-            time: nowFormatted,
+            time: new Date(at).toLocaleTimeString('en-US', { hour12: false }),
             rate: event.session.tokensPerSec,
             tokens: event.session.tokens,
           },
         ];
-        return next.slice(-40); // Keep last 40 data points
+        return next.slice(-40);
       });
     } else if (event.type === 'agent.spawned') {
       setAgents((prev) => {
@@ -84,68 +92,61 @@ export function useBurnEvents(options: UseBurnEventsOptions = {}) {
         });
         return next;
       });
-    } else if (event.type === 'run.started') {
-      if (event.workerId !== undefined) {
-        setAgents((prev) => {
-          const next = new Map(prev);
-          const current = next.get(event.workerId!);
-          if (current) {
-            next.set(event.workerId!, {
-              ...current,
-              status: 'working',
-              model: event.model || current.model,
-              currentRunId: event.runId,
-              lastActiveAt: event.at,
-            });
-          }
-          return next;
-        });
-      }
-    } else if (event.type === 'run.completed') {
-      if (event.workerId !== undefined) {
-        setAgents((prev) => {
-          const next = new Map(prev);
-          const current = next.get(event.workerId!);
-          if (current) {
-            next.set(event.workerId!, {
-              ...current,
-              status: 'working',
-              turnsCompleted: current.turnsCompleted + 1,
-              totalTokens: current.totalTokens + event.usage.totalTokens,
-              lastActiveAt: event.at,
-            });
-          }
-          return next;
-        });
-      }
-    } else if (event.type === 'agent.recycled') {
-      if (event.workerId !== undefined) {
-        setAgents((prev) => {
-          const next = new Map(prev);
-          const current = next.get(event.workerId!);
-          if (current) {
-            next.set(event.workerId!, {
-              ...current,
-              status: 'recycled',
-              turnsCompleted: event.turnsCompleted,
-              lastActiveAt: event.at,
-            });
-          }
-          return next;
-        });
-      }
+    } else if (event.type === 'run.started' && event.workerId !== undefined) {
+      setAgents((prev) => {
+        const next = new Map(prev);
+        const current = next.get(event.workerId!);
+        if (current) {
+          next.set(event.workerId!, {
+            ...current,
+            status: 'working',
+            model: event.model || current.model,
+            currentRunId: event.runId,
+            lastActiveAt: event.at,
+          });
+        }
+        return next;
+      });
+    } else if (event.type === 'run.completed' && event.workerId !== undefined) {
+      setAgents((prev) => {
+        const next = new Map(prev);
+        const current = next.get(event.workerId!);
+        if (current) {
+          next.set(event.workerId!, {
+            ...current,
+            status: 'working',
+            turnsCompleted: current.turnsCompleted + 1,
+            totalTokens: current.totalTokens + event.usage.totalTokens,
+            lastActiveAt: event.at,
+          });
+        }
+        return next;
+      });
+    } else if (event.type === 'agent.recycled' && event.workerId !== undefined) {
+      setAgents((prev) => {
+        const next = new Map(prev);
+        const current = next.get(event.workerId!);
+        if (current) {
+          next.set(event.workerId!, {
+            ...current,
+            status: 'recycled',
+            turnsCompleted: event.turnsCompleted,
+            lastActiveAt: event.at,
+          });
+        }
+        return next;
+      });
     } else if (event.type === 'session.stopped') {
       setSnapshot((prev) => (prev ? { ...prev, status: 'stopped' } : null));
     } else if (event.type === 'session.paused') {
       setSnapshot((prev) => (prev ? { ...prev, status: 'paused' } : null));
     } else if (event.type === 'session.resumed') {
-      setSnapshot((prev) => (prev ? { ...prev, status: 'running' } : null));
+      setSnapshot((prev) => (prev ? { ...prev, status: 'burning' } : null));
     } else if (event.type === 'error') {
       setError(event.message);
     }
-  }, []);
+  }, [sessionId]);
 
-  // Initialize SSE or Mock connection
   const connect = useCallback(() => {
     if (isMock) {
       setConnectionState('connected');
@@ -157,8 +158,7 @@ export function useBurnEvents(options: UseBurnEventsOptions = {}) {
     }
 
     setConnectionState('connecting');
-    const url = apiClient.getEventsUrl(sessionId);
-    const es = new EventSource(url, { withCredentials: true });
+    const es = new EventSource(apiClient.getEventsUrl(), { withCredentials: true });
     eventSourceRef.current = es;
 
     es.onopen = () => {
@@ -167,29 +167,31 @@ export function useBurnEvents(options: UseBurnEventsOptions = {}) {
       reconnectAttemptsRef.current = 0;
     };
 
-    es.onmessage = (e) => {
+    const handlePayload = (e: MessageEvent) => {
       try {
         const payload: BurnEvent = JSON.parse(e.data);
         pushEvent(payload);
-      } catch (err: any) {
+      } catch (err) {
         console.error('[useBurnEvents] Failed to parse SSE event:', err);
       }
     };
+
+    es.addEventListener('burn', handlePayload);
+    es.onmessage = handlePayload;
 
     es.onerror = () => {
       setConnectionState('error');
       es.close();
 
-      // Exponential backoff reconnect
       const attempts = reconnectAttemptsRef.current;
-      const delay = Math.min(1000 * Math.pow(2, attempts), 15000);
+      const delay = Math.min(1000 * 2 ** attempts, 15000);
       reconnectAttemptsRef.current += 1;
 
       reconnectTimeoutRef.current = setTimeout(() => {
         connect();
       }, delay);
     };
-  }, [isMock, sessionId, pushEvent]);
+  }, [isMock, pushEvent]);
 
   useEffect(() => {
     connect();
@@ -207,7 +209,6 @@ export function useBurnEvents(options: UseBurnEventsOptions = {}) {
     };
   }, [connect]);
 
-  // Burn Controls
   const startBurn = useCallback(
     async (config: BurnConfig) => {
       setError(null);
@@ -225,58 +226,56 @@ export function useBurnEvents(options: UseBurnEventsOptions = {}) {
 
       try {
         await apiClient.startBurn(config);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to start burn';
+        setError(message);
         throw err;
       }
     },
-    [isMock, pushEvent]
+    [isMock, pushEvent],
   );
 
   const stopBurn = useCallback(async () => {
     if (isMock) {
-      if (mockEngineRef.current) {
-        mockEngineRef.current.stop('user');
-      }
+      mockEngineRef.current?.stop('user');
       return;
     }
 
     try {
       await apiClient.stopBurn();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to stop burn';
+      setError(message);
       throw err;
     }
   }, [isMock]);
 
   const pauseBurn = useCallback(async () => {
     if (isMock) {
-      if (mockEngineRef.current) {
-        mockEngineRef.current.pause();
-      }
+      mockEngineRef.current?.pause();
       return;
     }
 
     try {
       await apiClient.pauseBurn();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to pause burn';
+      setError(message);
       throw err;
     }
   }, [isMock]);
 
   const resumeBurn = useCallback(async () => {
     if (isMock) {
-      if (mockEngineRef.current) {
-        mockEngineRef.current.resume();
-      }
+      mockEngineRef.current?.resume();
       return;
     }
 
     try {
-      // Resume via status or unpause
-    } catch (err: any) {
-      setError(err.message);
+      await apiClient.resumeBurn();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to resume burn';
+      setError(message);
       throw err;
     }
   }, [isMock]);

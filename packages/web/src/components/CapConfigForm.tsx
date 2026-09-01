@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { BurnCapConfig, BurnConfig, CapType, ModelPreference } from '@cursor-throwaway/shared';
+import type { BurnCapConfig, BurnConfig, CapType, ModelPreference } from '@cursor-burner/shared';
 import { Bot, CheckCircle2, DollarSign, Layers, Percent, ShieldCheck, Sliders, Zap } from 'lucide-react';
 
 interface CapConfigFormProps {

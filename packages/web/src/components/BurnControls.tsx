@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { BurnSessionStatus } from '@cursor-throwaway/shared';
+import type { BurnSessionStatus } from '@cursor-burner/shared';
 import { Flame, Pause, Play, Square, Zap } from 'lucide-react';
 
 interface BurnControlsProps {
@@ -21,7 +21,7 @@ export function BurnControls({
   onResume,
   isLoading = false,
 }: BurnControlsProps) {
-  const isRunning = status === 'running';
+  const isRunning = status === 'burning';
   const isPaused = status === 'paused';
   const isIdleOrStopped = status === 'idle' || status === 'stopped' || status === 'error';
 

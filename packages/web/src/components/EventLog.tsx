@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import type { BurnEvent } from '@cursor-throwaway/shared';
+import type { BurnEvent } from '@cursor-burner/shared';
 import type { BurnEventWithId } from '@/lib/sse-hook';
 import { formatTimestamp, formatTokens } from '@/lib/utils';
 import {
@@ -124,7 +124,7 @@ export function EventLog({ events, onClear }: EventLogProps) {
       case 'run.completed':
         return (
           <span className="text-slate-300 font-mono text-xs">
-            Worker #{event.workerId} finished turn in {event.durationMs}ms ({event.usage.completionTokens} completion tokens)
+            Worker #{event.workerId} finished turn in {event.durationMs}ms ({event.usage.outputTokens} output tokens)
           </span>
         );
       case 'run.started':

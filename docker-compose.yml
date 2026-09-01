@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - CORS_ORIGIN=http://localhost:3000
+      - SESSION_SECRET=${SESSION_SECRET:-dev-secret-change-in-production-32chars}
+    env_file:
+      - .env

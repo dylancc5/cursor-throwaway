@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { CapStatus } from '@cursor-throwaway/shared';
+import type { CapStatus } from '@cursor-burner/shared';
 import { formatCurrency, formatPercentage, formatTokens } from '@/lib/utils';
 import { Flame, ShieldAlert, Target } from 'lucide-react';
 

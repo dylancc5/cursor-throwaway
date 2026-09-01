@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { BurnConfig, BurnSessionStatus } from '@cursor-throwaway/shared';
+import type { BurnConfig, BurnSessionStatus } from '@cursor-burner/shared';
 import { Navbar } from '@/components/Navbar';
 import { StatCard } from '@/components/StatCard';
 import { UsageGauge } from '@/components/UsageGauge';
@@ -63,7 +63,7 @@ export default function BurnDashboardPage() {
   } = useBurnEvents({ sessionId, isMock });
 
   const status: BurnSessionStatus = snapshot?.status || 'idle';
-  const isRunning = status === 'running';
+  const isRunning = status === 'burning';
 
   // Elapsed timer ticker
   useEffect(() => {

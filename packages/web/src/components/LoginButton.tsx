@@ -63,7 +63,9 @@ export function LoginButton({
           } else if (authStatus.status === 'expired' || authStatus.status === 'error') {
             clearInterval(pollInterval);
             setIsLoading(false);
-            setStatusMessage(authStatus.errorMessage || 'Auth expired. Try again.');
+            setStatusMessage(
+              ('message' in authStatus && authStatus.message) || 'Auth expired. Try again.',
+            );
           }
         } catch {
           // If popup was closed by user

@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@cursor-throwaway/shared'],
+  transpilePackages: ['@cursor-burner/shared'],
   reactStrictMode: true,
 };
 

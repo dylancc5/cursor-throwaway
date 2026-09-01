@@ -6,7 +6,7 @@ import type {
   BurnSnapshot,
   CapStatus,
   SessionUsage,
-} from '@cursor-throwaway/shared';
+} from '@cursor-burner/shared';
 
 export interface MockEngineOptions {
   config: BurnConfig;
@@ -124,7 +124,7 @@ export class MockBurnEngine {
   public getSnapshot(): BurnSnapshot {
     return {
       sessionId: this.sessionId,
-      status: !this.isRunning ? 'stopped' : this.isPaused ? 'paused' : 'running',
+      status: !this.isRunning ? 'stopped' : this.isPaused ? 'paused' : 'burning',
       session: this.getSessionUsage(),
       account: this.getAccountUsage(),
       cap: this.getCapStatus(),
@@ -215,10 +215,11 @@ export class MockBurnEngine {
         workerId,
         runId,
         usage: {
-          promptTokens,
-          completionTokens,
+          inputTokens: promptTokens,
+          outputTokens: completionTokens,
+          cacheReadTokens: 0,
+          cacheWriteTokens: 0,
           totalTokens: turnTokens,
-          costCents,
         },
         durationMs: turnDurationMs,
         at: new Date().toISOString(),

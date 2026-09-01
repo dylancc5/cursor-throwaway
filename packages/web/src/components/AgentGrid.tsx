@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { AgentWorkerState } from '@cursor-throwaway/shared';
+import type { AgentWorkerState } from '@cursor-burner/shared';
 import { formatTokens } from '@/lib/utils';
 import { Bot, Cpu, RefreshCw, Sparkles } from 'lucide-react';
 
